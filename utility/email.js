@@ -36,6 +36,9 @@ class Mail {
   sentResetPassword() {
     this.sentMessage("reset");
   }
+  emailVerify() {
+    this.sentMessage(`emailverify`);
+  }
 }
 
 module.exports = Mail;

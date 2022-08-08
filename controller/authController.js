@@ -8,15 +8,6 @@ const Mail = require("../utility/email");
 console.log(Db);
 
 const User = Db.user;
-function responseFunc(res, status, statusCode, user, token) {
-  res.status(statusCode).json({
-    status,
-    results: user.length,
-    data: user,
-    token,
-  });
-}
-
 function resJson(user) {
   const token = jwt.sign({ id: user.id }, process.env.SECRET, {
     expiresIn: "1d",
@@ -25,16 +16,35 @@ function resJson(user) {
 }
 const signin = catchAsync(async (req, res, next) => {
   const { name, email, password, passwordConfirm, role } = req.body;
+
+  const randomNum = Math.round(Math.random() * 100000 + 1);
+  const getTime = String(new Date().getTime() + randomNum);
+  let randomSon = [];
+  for (let i = 0; i < 2; i++) {
+    let son = Math.round(Math.random() * 6 + 6);
+    randomSon.push(getTime[son]);
+  }
+  for (let i = 0; i < 3; i++) {
+    let son = Math.round(Math.random() * 10);
+    randomSon.push(son);
+  }
+
+  const random = randomSon.join("");
+  const emailExpires = new Date().getTime() + 2 * 60 * 1000;
   const user = await User.create({
     name,
     email,
     password,
     passwordConfirm,
+    randomSon: random,
+    emailExpires,
   });
+  await new Mail(user, random).emailVerify();
   const token = resJson(user);
   res.status(201).json({
     status: "success",
     token,
+    message: "email verify code sended succsesfully",
   });
 });
 
@@ -257,6 +267,41 @@ const resetPassword = catchAsync(async (req, res, next) => {
     token: null,
   });
 });
+
+const emailVerify = catchAsync(async (req, res, next) => {
+  const { code } = req.body;
+  if (!code) {
+    return next(new AppError("Code not found", 400));
+  }
+
+  const user = await User.findOne({
+    where: {
+      id: req.user.id,
+      randomSon: code,
+      emailExpires: {
+        [Db.Op.gt]: Date.now(),
+      },
+    },
+  });
+  if (!user) {
+    return next(new AppError("user not found or jwt malwormet ", 400));
+  }
+
+  await User.update(
+    {
+      emailActiv: true,
+    },
+    {
+      where: {
+        id: user.dataValues.id,
+      },
+    }
+  );
+  res.status(200).json({
+    status: "success",
+    message: "Email verified succesfully",
+  });
+});
 module.exports = {
   signin,
   login,
@@ -266,4 +311,5 @@ module.exports = {
   updatePassword,
   forgotPassword,
   resetPassword,
+  emailVerify,
 };

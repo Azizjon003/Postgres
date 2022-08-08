@@ -72,6 +72,17 @@ let userModel = function (sequalize, DataTypes) {
         type: DataTypes.DATE,
         allowNull: true,
       },
+      emailActiv: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
+      randomSon: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      emailExpires: {
+        type: DataTypes.DATE,
+      },
     },
     {
       createdAt: false,
