@@ -21,8 +21,8 @@ let Db = {};
 
 Db.sequialize = sequialize;
 Db.Op = Op;
-Db.user = require("./userModel")(sequialize, DataTypes, Op);
-
+Db.user = require("./userModel")(sequialize, DataTypes);
+Db.googleUser = require("./googleUser")(sequialize, DataTypes);
 // Db.sequialize
 //   .sync({
 //     force: true,

@@ -5,7 +5,6 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const Mail = require("../utility/email");
-console.log(Db);
 
 const User = Db.user;
 function resJson(user) {
