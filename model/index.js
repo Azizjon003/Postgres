@@ -32,6 +32,4 @@ Db.googleUser = require("./googleUser")(sequialize, DataTypes);
 //     console.log("ishla");
 //   });
 
-console.log(Db.user);
-
 module.exports = Db;

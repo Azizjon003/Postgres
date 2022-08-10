@@ -24,10 +24,20 @@ password.use(
       clientID: process.env.CLIENT_ID,
       clientSecret: process.env.CLIENT_SECRET,
       callbackURL: "http://localhost:8000/login/callback",
-      passReqToCallback: true,
     },
-    function (req, accessToken, refreshToken, profile, done) {
-      console.log(profile);
+    async function (req, accessToken, refreshToken, profile, done) {
+      console.log(profile._json);
+      let user = profile._json;
+
+      await GoogleUser.create({
+        name: user.name,
+        email: user.email,
+        googleid: user.sub,
+        photo: user.picture,
+      });
+
+      console.log("create successfully ");
+
       return done(null, profile);
     }
   )

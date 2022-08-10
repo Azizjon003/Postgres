@@ -54,7 +54,7 @@ let userModel = function (sequalize, DataTypes) {
           max: 20,
           passConfirm(value) {
             if (value !== this.password) {
-              throw new Error("Only even values are allowed! bir xilku");
+              throw new Error("Only even values are allowed! bir xil emas");
             }
           },
         },
@@ -81,6 +81,28 @@ let userModel = function (sequalize, DataTypes) {
         allowNull: true,
       },
       emailExpires: {
+        type: DataTypes.DATE,
+      },
+      phoneActiv: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
+      number: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true,
+        validate: {
+          numberTrue: function (val) {
+            if (!validator.isNumeric(val)) {
+              throw new Error("bu qiymat number  qiymat nomer emas");
+            }
+          },
+        },
+      },
+      NumberCode: {
+        type: DataTypes.STRING,
+      },
+      numberExpires: {
         type: DataTypes.DATE,
       },
     },

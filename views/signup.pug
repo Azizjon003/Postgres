@@ -1,0 +1,38 @@
+doctype html
+html(lang="en")
+  head
+    meta(charset="UTF-8")
+    meta(http-equiv="X-UA-Compatible", content="IE=edge")
+    meta(name="viewport", content="width=device-width, initial-scale=1.0")
+    title Multi-Shop
+    link(rel="stylesheet", href="css/style2.css")
+    link(rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/brands.min.css" integrity="sha512-nS1/hdh2b0U8SeA8tlo7QblY6rY6C+MgkZIeRzJQQvMsFfMQFUKp+cgMN2Uuy+OtbQ4RoLMIlO2iF7bIEY3Oyg==" crossorigin="anonymous" referrerpolicy="no-referrer")
+  body 
+    .signup
+      .signup-connect
+        h1 Create your account
+        a.btn.btn-social.btn-facebook(href='/login')
+          i.fa-brands.fa-google.icon
+          |  Sign in with Google
+        a.btn.btn-social.btn-google(href='#')
+          i.fa-brands.fa-facebook.icon
+          |  Sign in with Facebook
+        a.btn.btn-social.btn-twitter(href='#')
+          i.fa-brands.fa-twitter.icon
+          |  Sign in with Twitter
+      .signup-classic
+        h2 Or use the classical way
+        form.form
+          fieldset.username
+            input(type='text' placeholder='username').username1
+          fieldset.email
+            input(type='email' placeholder='email').email1
+          fieldset.password
+            input(type='password' placeholder='password').password1
+          fieldset.passwordConfirm
+            input(type='password' placeholder='password-confirm').passwordConfirm1
+          fieldset.passwordConfirm
+            input(type='phone' placeholder="PhoneNumber" ).phone
+          button.btn(type='submit').btnSignUp sign up
+  script(src="js/lib/axios.js") 
+  script(src="js/signup.js")

@@ -1,20 +1,33 @@
 const Db = require("../model");
+
 const AppError = require("../utility/appError");
 const catchAsync = require("../utility/catchAsync");
+
+const Mail = require("../utility/email");
+const { promisify } = require("util");
+const sendPhoneSms = require("../utility/sendPhoneSms");
+
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const Mail = require("../utility/email");
 
 const User = Db.user;
-function resJson(user) {
-  const token = jwt.sign({ id: user.id }, process.env.SECRET, {
-    expiresIn: "1d",
+
+const saveTokenCookie = (res, token, req) => {
+  // shu cookieni ishlashini sorimiz
+  res.cookie("jwt", token, {
+    maxAge: 1 * 24 * 60 * 60 * 1000,
+    // httpOnly: true,
+    // secure: req.protocol === "https" ? true : false,
   });
-  return token;
-}
+};
+
+const resJson = (id) => {
+  return jwt.sign({ id: id.id }, process.env.SECRET, { expiresIn: "10h" });
+};
+
 const signin = catchAsync(async (req, res, next) => {
-  const { name, email, password, passwordConfirm, role } = req.body;
+  const { name, email, password, passwordConfirm, role, phone } = req.body;
 
   const randomNum = Math.round(Math.random() * 100000 + 1);
   const getTime = String(new Date().getTime() + randomNum);
@@ -28,7 +41,9 @@ const signin = catchAsync(async (req, res, next) => {
     randomSon.push(son);
   }
 
-  const random = randomSon.join("");
+  let random = randomSon.join("");
+  const rand = random;
+  random = await bcrypt.hash(random, 10);
   const emailExpires = new Date().getTime() + 2 * 60 * 1000;
   const user = await User.create({
     name,
@@ -37,9 +52,11 @@ const signin = catchAsync(async (req, res, next) => {
     passwordConfirm,
     randomSon: random,
     emailExpires,
+    number: phone,
   });
-  await new Mail(user, random).emailVerify();
+  await new Mail(user, rand).emailVerify();
   const token = resJson(user);
+  saveTokenCookie(res, token, req);
   res.status(201).json({
     status: "success",
     token,
@@ -72,26 +89,33 @@ const login = catchAsync(async (req, res, next) => {
     token,
   });
 });
+
 const protect = catchAsync(async (req, res, next) => {
   let token;
-
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith("Bearer")
   ) {
     token = req.headers.authorization.split(" ")[1];
   } else {
-    return next(
-      new AppError("Please log in to get access Bearer token not found", 401)
-    );
+    if (req.cookies) {
+      token = req.cookies.jwt;
+    } else
+      return next(
+        new AppError("Please log in to get access Bearer token not found", 401)
+      );
   }
 
-  const decod = await jwt.verify(token, process.env.SECRET);
+  console.log(token);
+  const decod = await promisify(jwt.verify)(token, process.env.SECRET);
   if (!decod) {
     return next(new AppError("Invalid tokencha ", 401));
   }
 
+  console.log(decod);
   const user = await User.findByPk(decod.id);
+
+  console.log(user);
   if (!user) {
     return next(new AppError("Invalid token", 401));
   }
@@ -100,6 +124,7 @@ const protect = catchAsync(async (req, res, next) => {
 
   next();
 });
+
 const role = (roles) => {
   return catchAsync(async (req, res, next) => {
     const user = req.user;
@@ -110,6 +135,7 @@ const role = (roles) => {
     next();
   });
 };
+
 const updateMe = catchAsync(async (req, res, next) => {
   let { name, email } = req.body;
   name = req.body.name || req.user.name;
@@ -170,6 +196,7 @@ const updatePassword = catchAsync(async (req, res, next) => {
     token,
   });
 });
+
 const forgotPassword = catchAsync(async (req, res, next) => {
   const { email } = req.body;
   if (!email) {
@@ -188,7 +215,7 @@ const forgotPassword = catchAsync(async (req, res, next) => {
 
   const token = crypto.randomBytes(32).toString("hex");
   const now = new Date().getTime(new Date()) + 10 * 60 * 1000;
-  console.log(now);
+
   const hashToken = await crypto
     .createHash("sha256")
     .update(token)
@@ -204,16 +231,16 @@ const forgotPassword = catchAsync(async (req, res, next) => {
       },
     }
   );
-  let url = `http://localhost:8000/resetPassword?token=${token}`;
+  let url = `http://localhost:8000/api/v1/users/resetpassword?token=${token}`;
   await new Mail(user.dataValues, url).sentResetPassword();
   res.status(200).json({
     status: "success",
     message: "Email sent succesfully",
   });
 });
+
 const resetPassword = catchAsync(async (req, res, next) => {
   const { token } = req.query;
-  console.log(token);
   if (!token) {
     return next(new AppError("Token not found", 400));
   }
@@ -221,7 +248,6 @@ const resetPassword = catchAsync(async (req, res, next) => {
     .createHash("sha256")
     .update(token)
     .digest("hex");
-  console.log(hashToken);
   const user = await User.findOne({
     where: {
       hashToken,
@@ -230,7 +256,6 @@ const resetPassword = catchAsync(async (req, res, next) => {
       },
     },
   });
-  console.log(user);
   if (!user) {
     return next(
       new AppError("Invalid token token eskirgan yoki kalla bo'lgan", 400)
@@ -276,12 +301,19 @@ const emailVerify = catchAsync(async (req, res, next) => {
   const user = await User.findOne({
     where: {
       id: req.user.id,
-      randomSon: code,
+
       emailExpires: {
         [Db.Op.gt]: Date.now(),
       },
     },
   });
+
+  console.log(code);
+
+  const shart = await bcrypt.compare(code, user.dataValues.randomSon);
+  if (!shart) {
+    return next(new AppError("Invalid code", 400));
+  }
   if (!user) {
     return next(new AppError("user not found or jwt malwormet ", 400));
   }
@@ -289,6 +321,8 @@ const emailVerify = catchAsync(async (req, res, next) => {
   await User.update(
     {
       emailActiv: true,
+      emailExpires: null,
+      randomSon: null,
     },
     {
       where: {
@@ -296,11 +330,114 @@ const emailVerify = catchAsync(async (req, res, next) => {
       },
     }
   );
+  // saveTokenCookie(res,token)
   res.status(200).json({
     status: "success",
     message: "Email verified succesfully",
   });
 });
+
+const sendNumberVerifyCode = catchAsync(async (req, res, next) => {
+  const { phone } = req.body;
+  if (!phone) {
+    return next(new AppError("Phone not found", 400));
+  }
+  const user = await User.findOne({
+    where: {
+      number: phone,
+    },
+  });
+  if (!user) {
+    return next(new AppError("user not found number", 400));
+  }
+
+  const randomNum = Math.round(Math.random() * 100000 + 1);
+  const getTime = String(new Date().getTime() + randomNum);
+  let randomSon = [];
+  for (let i = 0; i < 2; i++) {
+    let son = Math.round(Math.random() * 6 + 6);
+    randomSon.push(getTime[son]);
+  }
+  for (let i = 0; i < 3; i++) {
+    let son = Math.round(Math.random() * 10);
+    randomSon.push(son);
+  }
+
+  let random = randomSon.join("");
+  const sended = await sendPhoneSms(phone, random);
+  console.log(sended);
+  if (!sended) {
+    return next(new AppError("Sms not send", 400));
+  }
+  random = await bcrypt.hash(random, 12);
+  const numberExpires = new Date().getTime() + 2 * 60 * 1000;
+  await User.update(
+    {
+      NumberCode: random,
+      numberExpires: numberExpires,
+    },
+    {
+      where: {
+        id: user.dataValues.id,
+      },
+    }
+  );
+
+  res.status(200).json({
+    status: "success",
+    message: "send phone number verify code succesfully",
+  });
+});
+
+const verifyCode = catchAsync(async (req, res, next) => {
+  const { code } = req.body;
+  console.log(code);
+  if (!code) {
+    return next(new AppError("sizning kod raqamingiz eskirgan"), 400);
+  }
+  let user = await User.findByPk(req.user.id);
+  user = user.dataValues;
+  const hashCode = user.NumberCode;
+  const expires = user.numberExpires;
+
+  if (expires < Date.now()) {
+    return next(
+      new AppError(
+        "sizning kod raqamingiz eskirdi qaytadan foydalanib ko'ring",
+        400
+      )
+    );
+  }
+
+  const shart = await bcrypt.compare(code, hashCode);
+
+  if (!shart) {
+    return next(
+      new AppError("sizning kod raqamingiz xato qaytdan kiritb ko'ring ", 400)
+    );
+  }
+
+  const data = await User.update(
+    {
+      numberExpires: null,
+      NumberCode: null,
+      phoneActiv: true,
+    },
+    {
+      where: {
+        id: user.id,
+      },
+    }
+  );
+  if (!data) {
+    return next(new AppError("xatolik  yuz berdi ", 404));
+  }
+  res.status(200).json({
+    status: "succes",
+    message: "phone number verified succesfully",
+  });
+});
+
 module.exports = {
   signin,
   login,
@@ -311,4 +448,6 @@ module.exports = {
   forgotPassword,
   resetPassword,
   emailVerify,
+  sendNumberVerifyCode,
+  verifyCode,
 };
