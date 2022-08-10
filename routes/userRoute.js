@@ -11,9 +11,7 @@ Router.route("/phoneverify").patch(auth.protect, auth.sendNumberVerifyCode);
 Router.route("/verifyphone").patch(auth.protect, auth.verifyCode);
 Router.route("/forgotpassword").post(auth.forgotPassword);
 Router.route("/resetpassword").patch(auth.resetPassword);
-Router.route("/")
-  .post(obj.add)
-  .get(auth.protect, auth.role(["admin"]), obj.getAll);
+Router.route("/").post(obj.add).get(auth.protect, obj.getAll);
 Router.route("/:id").get(obj.getOne).patch(obj.update).delete(obj.deleteData);
 
 module.exports = Router;

@@ -1,5 +1,8 @@
 const Db = require("../model");
-const User = Db.user;
+const Mavzu = Db.mavzu;
+
+console.log(Mavzu);
+
 const responseFunc = async (res, statusCode, status, data) => {
   res.status(statusCode).json({
     status: status,
@@ -8,22 +11,10 @@ const responseFunc = async (res, statusCode, status, data) => {
 };
 const add = async (req, res, next) => {
   try {
-    const { name, email, password, passwordConfirm, role } = req.body;
-    // if (password !== passwordConfirm) {
-    //   return responseFunc(
-    //     res,
-    //     400,
-    //     "error",
-    //     "Password and confirm password not match"
-    //   );
-    // }
-
-    const user = await User.create({
-      name,
-      email,
-      password,
-      passwordConfirm,
-      role,
+    const { mavzu, fanId } = req.body;
+    const user = await Mavzu.create({
+      mavzu,
+      fanId,
     });
 
     responseFunc(res, 201, "success", user);
@@ -34,16 +25,8 @@ const add = async (req, res, next) => {
 
 const getAll = async (req, res, next) => {
   try {
-    const users = await User.findAll({
-      include: {
-        model: Db.test,
-        include: {
-          model: Db.mavzu,
-          include: {
-            model: Db.fan,
-          },
-        },
-      },
+    const users = await Mavzu.findAll({
+      include: Db.fan,
     });
     responseFunc(res, 201, "success", users);
   } catch (err) {
@@ -52,7 +35,7 @@ const getAll = async (req, res, next) => {
 };
 const getOne = async (req, res, next) => {
   try {
-    const user = await User.findByPk(req.params.id);
+    const user = await Mavzu.findByPk(req.params.id);
     responseFunc(res, 200, "success", user);
   } catch (err) {
     responseFunc(res, 400, "error", err.message);
@@ -60,7 +43,7 @@ const getOne = async (req, res, next) => {
 };
 const update = async (req, res, next) => {
   try {
-    const user = await User.update(req.body, {
+    const user = await Mavzu.update(req.body, {
       where: {
         id: req.params.id,
       },
@@ -74,7 +57,7 @@ const update = async (req, res, next) => {
 const deleteData = async (req, res, next) => {
   try {
     const id = req.params.id;
-    const user = await User.destroy({
+    const user = await Mavzu.destroy({
       where: {
         id,
       },

@@ -1,4 +1,5 @@
 const Db = require("../model");
+console.log(Db.user);
 
 const AppError = require("../utility/appError");
 const catchAsync = require("../utility/catchAsync");

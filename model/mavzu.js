@@ -1,19 +1,31 @@
-const mavzu = async (sequialize, DataTypes) => {
-  const mavzu = sequialize.define("mavzu", {
-    id: {
-      type: DataTypes.UUID,
-      primaryKey: true,
-      defaultValue: DataTypes.UUIDV4,
+const mavzu = (sequialize, DataTypes) => {
+  const mavzu = sequialize.define(
+    "mavzu",
+    {
+      id: {
+        type: DataTypes.UUID,
+        primaryKey: true,
+        defaultValue: DataTypes.UUIDV4,
+      },
+      mavzu: {
+        type: DataTypes.STRING(1024),
+        allowNull: false,
+      },
+      fanId: {
+        type: DataTypes.UUID,
+        allowNull: false,
+        references: {
+          model: "fans",
+          key: "id",
+        },
+      },
     },
-    mavzu: {
-      type: DataTypes.STRING(1024),
-      allowNull: false,
-    },
-    fanId: {
-      type: DataTypes.DataTypes.UUID,
-      allowNull: false,
-    },
-  });
+    {
+      timeStamps: false,
+      createdAt: false,
+      updatedAt: false,
+    }
+  );
   return mavzu;
 };
 

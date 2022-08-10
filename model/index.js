@@ -23,12 +23,19 @@ Db.sequialize = sequialize;
 Db.Op = Op;
 Db.user = require("./userModel")(sequialize, DataTypes);
 Db.googleUser = require("./googleUser")(sequialize, DataTypes);
-Db.test = require("./test")(sequialize, DataTypes);
+Db.fan = require("./fan")(sequialize, DataTypes);
 Db.mavzu = require("./mavzu")(sequialize, DataTypes);
+Db.test = require("./test")(sequialize, DataTypes);
+Db.fan.hasOne(Db.mavzu);
+Db.mavzu.belongsTo(Db.fan);
+
+Db.test.belongsTo(Db.mavzu);
+Db.test.belongsTo(Db.user);
+Db.user.hasMany(Db.test);
 // Db.sequialize
 //   .sync({
 //     force: true,
-//     alter: true,
+//     // alter: true,
 //   })
 //   .then(() => {
 //     console.log("ishla");
