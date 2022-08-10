@@ -1,6 +1,7 @@
 const password = require("passport");
 const GoogleStrategy = require("passport-google-oauth2").Strategy;
 const GoogleUser = require("../model").googleUser;
+console.log(GoogleUser);
 password.serializeUser(function (user, done) {
   /*
     From the user take just the id (to minimize the cookie size) and just pass the id of the user
@@ -27,17 +28,25 @@ password.use(
     },
     async function (req, accessToken, refreshToken, profile, done) {
       console.log(profile._json);
+      console.log(accessToken);
       let user = profile._json;
 
-      await GoogleUser.create({
-        name: user.name,
-        email: user.email,
-        googleid: user.sub,
-        photo: user.picture,
+      const [Users, created] = await GoogleUser.findOrCreate({
+        where: {
+          googleid: user.sub,
+        },
+        defaults: {
+          googleid: user.sub,
+          email: user.email,
+          name: user.name,
+          photo: user.picture,
+        },
       });
+      console.log("user", Users);
+      console.log("created", created);
 
       console.log("create successfully ");
-
+      profile.MamurId = Users.dataValues.id;
       return done(null, profile);
     }
   )

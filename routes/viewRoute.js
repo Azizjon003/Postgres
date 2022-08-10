@@ -19,6 +19,7 @@ Router.get(
   "/login/callback",
   password.authenticate("google", { failureRedirect: "/failed" }),
   function (req, res) {
+    console.log("req.user", req.user);
     res.redirect("/user");
   }
 );

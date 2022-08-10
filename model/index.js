@@ -23,6 +23,8 @@ Db.sequialize = sequialize;
 Db.Op = Op;
 Db.user = require("./userModel")(sequialize, DataTypes);
 Db.googleUser = require("./googleUser")(sequialize, DataTypes);
+Db.test = require("./test")(sequialize, DataTypes);
+Db.mavzu = require("./mavzu")(sequialize, DataTypes);
 // Db.sequialize
 //   .sync({
 //     force: true,

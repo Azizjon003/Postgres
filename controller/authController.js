@@ -106,16 +106,16 @@ const protect = catchAsync(async (req, res, next) => {
       );
   }
 
-  console.log(token);
+  // console.log(token);
   const decod = await promisify(jwt.verify)(token, process.env.SECRET);
   if (!decod) {
     return next(new AppError("Invalid tokencha ", 401));
   }
 
-  console.log(decod);
+  // console.log(decod);
   const user = await User.findByPk(decod.id);
 
-  console.log(user);
+  // console.log(user);
   if (!user) {
     return next(new AppError("Invalid token", 401));
   }
@@ -308,7 +308,7 @@ const emailVerify = catchAsync(async (req, res, next) => {
     },
   });
 
-  console.log(code);
+  // console.log(code);
 
   const shart = await bcrypt.compare(code, user.dataValues.randomSon);
   if (!shart) {
@@ -365,7 +365,7 @@ const sendNumberVerifyCode = catchAsync(async (req, res, next) => {
 
   let random = randomSon.join("");
   const sended = await sendPhoneSms(phone, random);
-  console.log(sended);
+  // console.log(sended);
   if (!sended) {
     return next(new AppError("Sms not send", 400));
   }
@@ -391,7 +391,7 @@ const sendNumberVerifyCode = catchAsync(async (req, res, next) => {
 
 const verifyCode = catchAsync(async (req, res, next) => {
   const { code } = req.body;
-  console.log(code);
+  // console.log(code);
   if (!code) {
     return next(new AppError("sizning kod raqamingiz eskirgan"), 400);
   }
