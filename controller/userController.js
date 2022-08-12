@@ -39,9 +39,6 @@ const getAll = async (req, res, next) => {
         model: Db.test,
         include: {
           model: Db.mavzu,
-          include: {
-            model: Db.fan,
-          },
         },
       },
     });
